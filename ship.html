@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>CarShip — Автомобили</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            color: #1c1c1e;
+            padding-bottom: 70px;
+        }
+
+        .header {
+            background: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0066cc, #00a3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            padding: 0 16px;
+            gap: 8px;
+            overflow-x: auto;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            background: none;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        .cars-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .car-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .car-card:active {
+            transform: scale(0.97);
+        }
+
+        .car-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .car-info {
+            padding: 12px;
+        }
+
+        .car-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .car-year {
+            font-size: 13px;
+            color: #6c757d;
+            margin: 4px 0;
+        }
+
+        .car-price {
+            font-weight: 700;
+            font-size: 18px;
+            color: #0066cc;
+        }
+
+        /* Модальное окно (детали авто) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        .back-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-image {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .car-details {
+            padding: 20px;
+        }
+
+        .car-specs {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .contact-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 12px;
+        }
+
+        .in-stock {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .out-of-stock {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        /* Стили для слайдера */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .slider-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slider-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .slider-image.active {
+            opacity: 1;
+        }
+
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .slider-btn:hover {
+            background: rgba(0,0,0,0.8);
+        }
+
+        .slider-btn.prev {
+            left: 10px;
+        }
+
+        .slider-btn.next {
+            right: 10px;
+        }
+
+        .slider-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dot.active {
+            background: white;
+        }
+
+        @media (max-width: 480px) {
+            .cars-grid {
+                gap: 12px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🚗 CarShip</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-category="asia">🌏 Под заказ (Азия/Европа)</button>
+        <button class="tab" data-category="moscow">📍 В наличии в Москве</button>
+        <button class="tab" data-category="used">🔄 Поддержанные в Москве</button>
+    </div>
+
+    <div id="carsContainer" class="cars-grid">
+        <div class="loading">Загрузка...</div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-header">
+            <button class="back-btn" onclick="closeModal()">←</button>
+            <span id="modalTitle">CarShip</span>
+            <div style="width:32px;"></div>
+        </div>
+        <div id="modalContent"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 📦 ВСЕ ДАННЫЕ ОБ АВТОМОБИЛЯХ ХРАНЯТСЯ ЗДЕСЬ (в коде)
+        // ============================================================
+        const CARS_DATA = {
+            asia: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://raw.githubusercontent.com/volkov98/car_ship/main/Bmw-e34-m5-wikipedia.jpg',
+                        'https://raw.githubusercontent.com/volkov98/car_ship/main/images.jpeg'
+                    ],
+                    brand: 'BMW',
+                    model: '525i E34',
+                    year: 1995,
+                    price: 3200000,
+                    specs: '2.5 бензин (192 л.с)\nАКПП (5 ступ.)\nЗадний привод\nПробег: 55,366 км\nЯпония, 2025',
+                    in_stock: true,
+                    location: 'Китай/Европа'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://raw.githubusercontent.com/volkov98/car_ship/main/toyota-crown-s170-athlete.jpg'
+                    ],
+                    brand: 'Toyota',
+                    model: 'Crown',
+                    year: 2019,
+                    price: 2800000,
+                    specs: '2.0 гибрид (226 л.с)\nCVT\nПолный привод\nПробег: 32,000 км',
+                    in_stock: true,
+                    location: 'Япония'
+                },
+                {
+                    id: 2,
+                    photos: [
+                        'https://raw.githubusercontent.com/volkov98/car_ship/main/audi_a6_1263992.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'A6 Quattro',
+                    year: 2021,
+                    price: 4500000,
+                    specs: '3.0 бензин (340 л.с)\nАКПП 8 ст.\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: true,
+                    location: 'Германия'
+                }
+            ],
+
+            moscow: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://via.placeholder.com/600x400/dc3545/ffffff?text=Mercedes+S300'
+                    ],
+                    brand: 'Mercedes-Benz',
+                    model: 'S300SE',
+                    year: 2020,
+                    price: 3500000,
+                    specs: '3.0 бензин (258 л.с)\nАКПП 9 ст.\nЗадний привод\nПробег: 45,000 км',
+                    in_stock: true,
+                    location: 'Москва, САО'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://via.placeholder.com/600x400/17a2b8/ffffff?text=BMW+X5'
+                    ],
+                    brand: 'BMW',
+                    model: 'X5 G05',
+                    year: 2022,
+                    price: 5900000,
+                    specs: '3.0 дизель (249 л.с)\nАКПП 8 ст.\nПолный привод\nПробег: 18,000 км',
+                    in_stock: true,
+                    location: 'Москва, ЦАО'
+                }
+            ],
+
+            used: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://via.placeholder.com/600x400/6f42c1/ffffff?text=Lexus+LX470'
+                    ],
+                    brand: 'Lexus',
+                    model: 'LX470',
+                    year: 2005,
+                    price: 1200000,
+                    specs: '4.7 бензин (235 л.с)\nАКПП\nПолный привод\nПробег: 220,000 км\nТребуется небольшой ремонт',
+                    in_stock: true,
+                    location: 'Москва, ЮАО'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://via.placeholder.com/600x400/fd7e14/ffffff?text=Honda+Accord'
+                    ],
+                    brand: 'Honda',
+                    model: 'Accord',
+                    year: 2008,
+                    price: 650000,
+                    specs: '2.4 бензин (190 л.с)\nАКПП\nПередний привод\nПробег: 180,000 км',
+                    in_stock: true,
+                    location: 'Москва, ВАО'
+                }
+            ]
+        };
+
+        // ============================================================
+        // 🖥️ ЛОГИКА РАБОТЫ КАТАЛОГА
+        // ============================================================
+
+        let currentCategory = 'asia';
+        let currentSlide = 0;
+
+        function renderCars() {
+            const container = document.getElementById('carsContainer');
+            const cars = CARS_DATA[currentCategory] || [];
+
+            if (cars.length === 0) {
+                container.innerHTML = '<div class="loading">Нет автомобилей в этой категории</div>';
+                return;
+            }
+
+            container.innerHTML = cars.map(car => `
+                <div class="car-card" onclick="openCarModal('${currentCategory}', ${car.id})">
+                    <img src="${car.photos[0] || 'https://placehold.co/400x300?text=No+Image'}" class="car-image">
+                    <div class="car-info">
+                        <div class="car-title">${car.brand} ${car.model}</div>
+                        <div class="car-year">${car.year}</div>
+                        <div class="car-price">${formatPrice(car.price)} ₽</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCarModal(category, carId) {
+            const car = CARS_DATA[category].find(c => c.id === carId);
+            if (!car) return;
+
+            document.getElementById('modalTitle').textContent = `${car.brand} ${car.model}`;
+
+            let photosHTML = '';
+
+            if (car.photos.length > 1) {
+                photosHTML = `
+                    <div class="slider-container">
+                        <div class="slider-wrapper">
+                            ${car.photos.map((photo, index) => `
+                                <img src="${photo}" class="slider-image ${index === 0 ? 'active' : ''}" data-index="${index}">
+                            `).join('')}
+                        </div>
+                        <button class="slider-btn prev" onclick="changeSlide(-1)">‹</button>
+                        <button class="slider-btn next" onclick="changeSlide(1)">›</button>
+                        <div class="slider-dots">
+                            ${car.photos.map((_, index) => `
+                                <span class="dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                photosHTML = `<img src="${car.photos[0]}" class="modal-image">`;
+            }
+
+            document.getElementById('modalContent').innerHTML = `
+                ${photosHTML}
+                <div class="car-details">
+                    <div style="font-size:28px; font-weight:700; color:#0066cc;">${formatPrice(car.price)} ₽</div>
+                    <div class="stock-badge ${car.in_stock ? 'in-stock' : 'out-of-stock'}">
+                        ${car.in_stock ? '✓ В наличии' : '✗ Нет в наличии'}
+                    </div>
+                    <div class="car-specs">
+                        <strong>📋 Характеристики:</strong><br>
+                        ${car.specs.replace(/\n/g, '<br>')}
+                    </div>
+                    <div style="margin-top:8px;">
+                        <strong>📍 Местоположение:</strong> ${car.location}
+                    </div>
+                    <button class="contact-btn" onclick="alert('📞 Свяжитесь с нами: @CarShip_manager или +7 (XXX) XXX-XX-XX')">
+                        📞 Связаться с менеджером
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('modal').classList.add('active');
+            currentSlide = 0;
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function changeSlide(direction) {
+            const slides = document.querySelectorAll('.slider-image');
+            const dots = document.querySelectorAll('.dot');
+
+            if (slides.length === 0) return;
+
+            slides[currentSlide].classList.remove('active');
+            if (dots.length) dots[currentSlide].classList.remove('active');
+
+            currentSlide += direction;
+
+            if (currentSlide >= slides.length) currentSlide = 0;
+            if (currentSlide < 0) currentSlide = slides.length - 1;
+
+            slides[currentSlide].classList.add('active');
+            if (dots.length) dots[currentSlide].classList.add('active');
+        }
+
+        function goToSlide(index) {
+            const slides = document.querySelectorAll('.slider-image');
+            const dots = document.querySelectorAll('.dot');
+
+            if (slides.length === 0) return;
+
+            slides[currentSlide].classList.remove('active');
+            if (dots.length) dots[currentSlide].classList.remove('active');
+
+            currentSlide = index;
+
+            slides[currentSlide].classList.add('active');
+            if (dots.length) dots[currentSlide].classList.add('active');
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('ru-RU').format(price);
+        }
+
+        // Переключение категорий (табы)
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentCategory = tab.dataset.category;
+                renderCars();
+            });
+        });
+
+        // Подключаем Telegram WebApp (если запущено внутри Telegram)
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.enableClosingConfirmation();
+        }
+
+        // Первоначальная загрузка
+        renderCars();
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
